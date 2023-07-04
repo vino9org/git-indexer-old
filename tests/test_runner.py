@@ -48,8 +48,8 @@ def test_run_mirror(tmp_path):
 
 
 @pytest.mark.skipif(os.environ.get("GITHUB_TOKEN") is not None, reason="does not work in Github action, no ssh key")
-def test_run_indexer():
+def test_run_indexer(tmp_path):
     args = run.parse_args(
-        shlex.split(f"--index --query {__TEST_GITHUB_REPO___} --source github --filter *")  # noqa E501
+        shlex.split(f"--index --query {__TEST_GITHUB_REPO___} --source github --filter * --db {tmp_path}/tmp.db")
     )
     run.run_indexer(args)

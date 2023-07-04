@@ -33,7 +33,7 @@ class Indexer:
             self.uri = uri
             self.is_mem_db = False
         elif env_uri:
-            self.db_uri = env_uri
+            self.uri = env_uri
             self.is_mem_db = False
         else:
             self.uri = "sqlite:///:memory:"
@@ -93,7 +93,7 @@ class Indexer:
 
                 processed += 1
                 if processed % 200 == 0 and show_progress:
-                    log(f"Indexed {processed:7,} commits")
+                    log(f"indexed {processed:5,} commits")
 
             repo.last_indexed_at = datetime.now()
             self.session.add(repo)
@@ -106,7 +106,7 @@ class Indexer:
                 self.session.rollback()
 
             if processed > 0:
-                log(f"Indexed {processed:7,} commits in the repository")
+                log(f"indexed {processed:5,} commits in the repository")
 
             return processed
 
