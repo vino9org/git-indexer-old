@@ -43,16 +43,17 @@ class Indexer:
         Base.metadata.create_all(self.engine)
         self.session = Session(self.engine)
 
+        self.db_file = db_file
+
         if self.is_mem_db and db_file and os.path.isfile(db_file):
             disk_db = sqlite3.connect(db_file)
             disk_db.backup(cast(sqlite3.dbapi2.Connection, self.session.connection().connection.driver_connection))
-            self.db_file = db_file
             log(f"loaded database {self.db_file} into memory")
 
     def close(self):
         self.session.close()
 
-        if self.is_mem_db:
+        if self.is_mem_db and self.db_file:
             # export database to file
             # write to temp file first then rename to avoid potentially corrupting the database
             tmp_file = self.db_file + ".new"
