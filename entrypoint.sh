@@ -16,4 +16,5 @@ if [ "$FILTER" = "" ]; then
     FILTER="*"
 fi
 
-python run.py --index --source gitlab --query "$QUERY" --filter "$FILTER" --db --db $DATA_DIR/git-indexer.db
+python run.py --index --source gitlab --query "$QUERY" --filter "$FILTER" --db --db $DATA_DIR/git-indexer.db --upload
+
