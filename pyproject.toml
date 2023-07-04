@@ -27,6 +27,7 @@ pytest = "^7.2"
 pytest-mock = "^3.10"
 pytest-cov = "^4.0"
 mypy = "^1.4.1"
+pre-commit = "^3.3.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -42,7 +43,6 @@ flake8-comprehensions = "^3.10.0"
 flake8-debugger = "^4.1.2"
 flake8-fixme = "^1.1.1"
 flake8-variables-names = "^0.0.5"
-pre-commit = "^2.19.0"
 types-setuptools = "^57.4.8"
 types-toml = "^0.10.3"
 isort = "^5.12.0"
