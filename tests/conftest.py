@@ -33,7 +33,7 @@ def seed_data(session):
 
 @pytest.fixture(scope="session")
 def indexer():
-    indexer = Indexer("sqlite:///:memory:")
+    indexer = Indexer(uri="sqlite:///:memory:")
     yield indexer
 
 
