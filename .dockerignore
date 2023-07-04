@@ -1,0 +1,13 @@
+# Ignore everything
+
+**
+
+# White-list what we need
+
+!requirements.txt
+!*.py
+!indexer/*.py
+!entrypoint.sh
+!gui/*.py
+!template/*.html
+!static/*

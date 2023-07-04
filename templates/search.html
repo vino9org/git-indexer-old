@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% from 'bootstrap5/form.html' import render_form, render_form_row, render_field %}
+
+{% block content %}
+    <form autocomplete="off" action={{ url_for("search") }} method="post">
+        <div class="row mb-3">
+            <div class="col-sm-9">
+                {{ render_field(form.query) }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-3">
+                {{ render_field(form.search) }}
+            </div>
+        </div>
+    </form>
+{% endblock %}

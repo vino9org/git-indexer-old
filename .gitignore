@@ -1,0 +1,47 @@
+*.swp
+package-lock.json
+__pycache__
+.pytest_cache
+.venv
+*.egg-info
+.env*
+
+# pyinstaller
+build/
+dist/
+run.spec
+
+# test reports
+test-report/
+.coverage
+coverage.xml
+pytest_junit.xml
+
+# mypy
+.mypy_cache/
+
+# intellj
+.idea/
+
+# AWS SAM CLI
+.aws-sam/
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+# test scripts and files
+x
+repo.lst
+
+# sqlite databases
+db/*
+*.db
+*.csv
+
+# tableau
+*.twbr
+*.twb
+
+# vscode plugins
+database-client-config.json

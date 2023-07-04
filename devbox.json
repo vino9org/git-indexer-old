@@ -1,0 +1,17 @@
+{
+  "packages": [
+    "python@3.10",
+    "poetry@latest"
+  ],
+  "shell": {
+    "init_hook": [
+      "poetry install",
+      "poetry shell"
+    ],
+    "scripts": {
+      "idx": "poetry run python run.py --index --source gitlab --query 'securitybankph/' --filter '*'",
+      "gui": "poetry run flask --app gui run --debug",
+      "test": "poetry run pytest -v"
+    }
+  }
+}
