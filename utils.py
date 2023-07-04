@@ -126,7 +126,7 @@ def enumerate_github_repos(query: str, access_token: Optional[str] = None, useHt
 
 
 def log(msg: str) -> None:
-    print(f"{timestamp()}:RSS {rss():4,} MB :{msg}")
+    print(f"{timestamp()}:RSS {rss():4,} MB: {msg}")
 
 
 def __shorten__(path: str, max_lenght: int) -> str:

@@ -1,3 +1,4 @@
+import os
 import shlex
 
 import pytest
@@ -36,7 +37,7 @@ def test_cmdline_options():
         run.parse_args(shlex.split("--index --source gitlab --database test.db --dry-run"))
 
 
-@pytest.mark.xfail(reason="fails with ssh key problem when running in Github action")
+@pytest.mark.skipif(os.environ.get("GITHUB_TOKEN") is not None, reason="does not work in Github action, no ssh key")
 def test_run_mirror(tmp_path):
     args = run.parse_args(
         shlex.split(
@@ -46,7 +47,7 @@ def test_run_mirror(tmp_path):
     run.run_mirror(args)
 
 
-@pytest.mark.xfail(reason="fails with ssh key problem when running in Github action")
+@pytest.mark.skipif(os.environ.get("GITHUB_TOKEN") is not None, reason="does not work in Github action, no ssh key")
 def test_run_indexer():
     args = run.parse_args(
         shlex.split(f"--index --query {__TEST_GITHUB_REPO___} --source github --filter *")  # noqa E501

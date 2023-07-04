@@ -11,8 +11,8 @@ from dotenv import find_dotenv, load_dotenv
 cwd = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.abspath(f"{cwd}/.."))
 
-import indexer  # noqa; E402  importing will trigger dataabase initialization
-from indexer.models import Author, Commit, Repository  # noqa; E402
+from indexer import Indexer  # noqa: E402   sys.path should be set prior to import
+from indexer.models import Author, Commit, Repository  # noqa: E402
 
 load_dotenv(find_dotenv(".env.test"))
 
@@ -32,7 +32,13 @@ def seed_data(session):
 
 
 @pytest.fixture(scope="session")
-def session():
+def indexer():
+    indexer = Indexer("sqlite:///:memory:")
+    yield indexer
+
+
+@pytest.fixture(scope="session")
+def session(indexer):
     seed_data(indexer.session)
     yield indexer.session
 

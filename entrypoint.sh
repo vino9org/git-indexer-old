@@ -8,7 +8,7 @@ mkdir -p $DATA_DIR
 
 if [ ! -d "/root/.ssh" ]; then
     # something is not right, let's wait for help
-    sleep 10000
+    sleep 7200
 fi
 
 
@@ -17,4 +17,3 @@ if [ "$FILTER" = "" ]; then
 fi
 
 python run.py --index --source gitlab --query "$QUERY" --filter "$FILTER" --db --db $DATA_DIR/git-indexer.db --upload
-

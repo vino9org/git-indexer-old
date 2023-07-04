@@ -9,7 +9,7 @@ from typing import Iterable
 
 from dotenv import load_dotenv
 
-from indexer import db_export, db_restore, index_repository, update_commit_stats
+from indexer import Indexer
 from utils import (
     enumerate_github_repos,
     enumerate_gitlab_repos,
@@ -101,8 +101,7 @@ def run_indexer(args: argparse.Namespace) -> None:
     # after indexing is done we'll save the database in memory back to disk
     n_repos, n_commits = 0, 0
 
-    if os.path.exists(args.db):
-        db_restore(args.db)
+    indexer = Indexer(db_file=os.path.expanduser(args.db))
 
     if args.source == "gitlab":
         enumerator = partial(enumerate_gitlab_repos)
@@ -119,12 +118,12 @@ def run_indexer(args: argparse.Namespace) -> None:
     for repo_url in enumerator(args.query):
         if match_any(repo_url, args.filter):
             if not args.dry_run:
-                n_commits += index_repository(repo_url, args.source, show_progress=True)
+                n_commits += indexer.index_repository(repo_url, args.source, show_progress=True)
                 n_repos += 1
 
     if n_commits:
-        update_commit_stats()
-        db_export(args.db)
+        indexer.update_commit_stats()
+        indexer.close()
 
     if args.upload:
         suffix = re.sub(r"[^0-9.]", "", timestamp())
