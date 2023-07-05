@@ -5,7 +5,7 @@ import socket
 import sys
 import warnings
 from datetime import datetime
-from typing import Iterator, Optional
+from typing import Iterator, List, Optional
 from urllib.parse import urlparse
 
 import gitlab
@@ -168,3 +168,23 @@ def upload_file(source_file: str, destination: str) -> bool:
     except Exception as e:
         print(f"Failed to upload {source_file} to gs://{bucket_name}/{destination}: {e}")
         return False
+
+
+def normalize_branches(branches: List[str]) -> str:
+    """
+    normalize list of branch names into a string with comma sperated branches names
+    branch names will be shorted by the following logic:
+    1. if the branch name contains /, only characters beofre the / will be used
+    2. if the branch name is longer than 10 characters, the first 10 characters are used
+    the main purpose of this function is to determine is the type of branches a commit is one,
+    e.g. main, master, develop, feature, bugfix, etc.
+    """
+    tmp = {}
+    for branch in branches:
+        if "->" in branch:
+            continue
+        branch = re.sub(r"^origin/", "", branch)
+        tmp[branch.split("/")[0][:10].strip()] = 1
+    keys = list(tmp.keys())
+    keys.sort()
+    return ",".join(keys)[:1024]

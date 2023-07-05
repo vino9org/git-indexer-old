@@ -10,6 +10,7 @@ from utils import (
     enumerate_gitlab_repos,
     enumerate_local_repos,
     match_any,
+    normalize_branches,
     should_exclude_from_stats,
     upload_file,
 )
@@ -129,3 +130,17 @@ def test_display_url():
 @pytest.mark.skipif(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS") is None, reason="GCP credentials not set")
 def test_upload_file():
     assert upload_file(__file__, "test_file.temp")
+
+
+def test_normalize_branches():
+    assert "bugfix,feature,master,release,some_rando" == normalize_branches(
+        [
+            "origin/feature/presigned-url-generator",
+            "origin/feature/debug-error",
+            "origin/HEAD -> origin/master",
+            "origin/master",
+            "release/1.0",
+            "bugfix/PROJ-1233",
+            "some_random_long_branch_name",
+        ]
+    )

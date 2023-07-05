@@ -3,7 +3,7 @@ import sqlite3
 import sys
 import traceback
 from datetime import datetime
-from typing import List, Optional, cast
+from typing import Optional, cast
 
 from git.exc import GitCommandError
 from pydriller import Repository as PyDrillerRepository
@@ -12,7 +12,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 
-from utils import display_url, log, should_exclude_from_stats
+from utils import display_url, log, normalize_branches, should_exclude_from_stats
 
 from .models import (
     Base,
@@ -81,16 +81,22 @@ class Indexer:
             for commit in PyDrillerRepository(clone_url, include_refs=True, include_remotes=True).traverse_commits():
                 if commit.hash in old_commits:
                     # compare existing branch info and new branches
-                    old_commit = load_commit(self.session, commit.hash)
-                    new_branches = self._branch_to_text_(commit.branches)
+                    # update branches if they are different
+                    old_commit = [git_commit for git_commit in repo.commits if git_commit.sha == commit.hash][0]
+                    new_branches = normalize_branches(commit.branches)
                     if new_branches != old_commit.branches:
-                        print(f"{commit.hash} has different branches: {new_branches}")
+                        old_commit.branches = new_branches
+                        self.session.add(old_commit)
+                        processed += 1
+
+                    # move on to next commit
                     continue
 
                 if (datetime.now() - start_t).seconds > timeout:
                     print(f"### indexing not done after {timeout} seconds, aborting {display_url(clone_url)}")
                     continue
 
+                # new commit
                 git_commit = load_commit(self.session, commit.hash)
                 if not git_commit:
                     git_commit = self._new_commit_(commit)
@@ -146,7 +152,7 @@ class Indexer:
             message=commit.msg[:2048],  # some commits has super long message, e.g. squash merge
             author=author,
             is_merge=commit.merge,
-            branches=self._branch_to_text_(commit.branches),
+            branches=normalize_branches(commit.branches),
             n_lines=commit.lines,
             n_files=commit.files,
             n_insertions=commit.insertions,
@@ -178,6 +184,3 @@ class Indexer:
             git_commit.files.append(new_file)
 
         return git_commit
-
-    def _branch_to_text_(self, lst: List[str]) -> str:
-        return ",".join(lst)[:1024]
