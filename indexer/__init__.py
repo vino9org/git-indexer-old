@@ -3,8 +3,9 @@ import sqlite3
 import sys
 import traceback
 from datetime import datetime
-from typing import Optional, cast
+from typing import List, Optional, cast
 
+from git.exc import GitCommandError
 from pydriller import Repository as PyDrillerRepository
 from pydriller.domain.commit import Commit as PyDrillerCommit
 from sqlalchemy import create_engine
@@ -79,6 +80,11 @@ class Indexer:
 
             for commit in PyDrillerRepository(clone_url, include_refs=True, include_remotes=True).traverse_commits():
                 if commit.hash in old_commits:
+                    # compare existing branch info and new branches
+                    old_commit = load_commit(self.session, commit.hash)
+                    new_branches = self._branch_to_text_(commit.branches)
+                    if new_branches != old_commit.branches:
+                        print(f"{commit.hash} has different branches: {new_branches}")
                     continue
 
                 if (datetime.now() - start_t).seconds > timeout:
@@ -110,10 +116,15 @@ class Indexer:
 
             return processed
 
+        except GitCommandError as e:
+            print(f"{e._cmdline} returned {e.stderr} for {clone_url}")
         except DBAPIError as e:
+            print(f"{e.statement} returned {e._message}")
+        except Exception as e:
             exc = traceback.format_exc()
             print(f"Exception indexing repository {clone_url} => {str(e)}\n{exc}")
-            return 0
+
+        return 0
 
     def update_commit_stats(self) -> None:
         """update stats at commit level"""
@@ -135,7 +146,7 @@ class Indexer:
             message=commit.msg[:2048],  # some commits has super long message, e.g. squash merge
             author=author,
             is_merge=commit.merge,
-            branches=",".join(list(commit.branches))[:1024],  # this attribute may not be immutable, how useful is it?
+            branches=self._branch_to_text_(commit.branches),
             n_lines=commit.lines,
             n_files=commit.files,
             n_insertions=commit.insertions,
@@ -167,3 +178,6 @@ class Indexer:
             git_commit.files.append(new_file)
 
         return git_commit
+
+    def _branch_to_text_(self, lst: List[str]) -> str:
+        return ",".join(lst)[:1024]

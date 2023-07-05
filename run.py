@@ -118,7 +118,8 @@ def run_indexer(args: argparse.Namespace) -> None:
     for repo_url in enumerator(args.query):
         if match_any(repo_url, args.filter):
             if not args.dry_run:
-                n_commits += indexer.index_repository(repo_url, args.source, show_progress=True)
+                source = "other" if args.source == "list" else args.source
+                n_commits += indexer.index_repository(repo_url, source, show_progress=True)
                 n_repos += 1
 
     if n_commits:
