@@ -46,16 +46,16 @@ class Indexer:
             self.uri = "sqlite:///:memory:"
             self.is_mem_db = True
 
-        self.engine = create_engine(self.uri, echo=echo)
-        Base.metadata.create_all(self.engine)
-        self.session = Session(self.engine)
-
         self.db_file = db_file
+        self.engine = create_engine(self.uri, echo=echo)
+        self.session = Session(self.engine)
 
         if self.is_mem_db and db_file and os.path.isfile(db_file):
             disk_db = sqlite3.connect(db_file)
             disk_db.backup(cast(sqlite3.dbapi2.Connection, self.session.connection().connection.driver_connection))
-            log(f"loaded database {self.db_file} into memory")
+            log(f"loaded database {db_file} into memory")
+
+        Base.metadata.create_all(self.engine)
 
     def close(self):
         self.session.close()
@@ -114,7 +114,7 @@ class Indexer:
                 if processed % 200 == 0 and show_progress:
                     log(f"indexed {processed:5,} commits")
 
-            repo.last_indexed_at = datetime.now()
+            repo.last_indexed_at = datetime.now().astimezone().isoformat(timespec="seconds")
             self.session.add(repo)
 
             try:
@@ -168,7 +168,7 @@ class Indexer:
             # dmm_unit_size=commit.dmm_unit_size,
             # dmm_unit_complexity=commit.dmm_unit_complexity,
             # dmm_unit_interfacing=commit.dmm_unit_interfacing,
-            created_at=commit.committer_date,
+            created_at=commit.committer_date.isoformat(),
         )
 
         for mod in commit.modified_files:
