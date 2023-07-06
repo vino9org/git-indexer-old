@@ -12,9 +12,9 @@ csv2bq() {
 
     echo uploading $1.csv to bigquery
 
-    gsutil cp $file.csv gs://vinolab/$file.csv
+    gsutil cp $file.csv gs://vinolab/$file.1.csv
 
-    bq rm -f -t dev1.$file
+    bq rm -f -t dev1.$file.1
     bq load --autodetect --source_format=CSV dev1.$file gs://vinolab/$file.csv
 
     # rm -rf $file.csv
@@ -24,32 +24,19 @@ csv2bq() {
 
 sqlite_to_csv()
 {
-# bigquery cannot handle csv exported by sqlite3. commit message that span multiple lines is the problem
 sqlite3 $1 <<EOF
 
 .headers on
 .mode csv
 
 .output all_commit_data.csv
-select * from all_commit_data;
+select * from all_commit_data ;
 
 .quit
 EOF
 }
 
-
-pg_to_csv()
-{
-CWD=$(pwd)
-
-psql sbc <<EOF
-
-COPY (select * from all_commit_data) TO '$CWD/all_commit_data.csv'  WITH DELIMITER ',' CSV HEADER;
-
-EOF
-}
-
-pg_to_csv
-# csv2bq all_commit_data
+sqlite_to_csv $1
+csv2bq all_commit_data
 
 
