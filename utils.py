@@ -105,9 +105,6 @@ def enumerate_gitlab_repos(
     gl = gitlab.Gitlab(url, private_token=private_token, per_page=100)
     for project in gl.search(scope="projects", search=query, get_all=True):
         clone_url = project["ssh_url_to_repo"]
-        # unfortunate ssh_config on this machine
-        if socket.gethostname() == "uno.local":
-            clone_url = clone_url.replace("gitlab.com", "gitlab-sbc")
         yield clone_url
 
 
@@ -188,3 +185,11 @@ def normalize_branches(branches: List[str]) -> str:
     keys = list(tmp.keys())
     keys.sort()
     return ",".join(keys)[:1024]
+
+
+def patch_ssh_gitlab_url(clone_url: str) -> str:
+    # unfortunate ssh_config on this machine
+    if clone_url.startswith("git@gitlab.com") and socket.gethostname() == "uno.local":
+        return clone_url.replace("git@gitlab.com", "git@gitlab-sbc")
+    else:
+        return clone_url

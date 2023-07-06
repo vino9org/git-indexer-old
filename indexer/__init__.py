@@ -12,7 +12,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 
-from utils import display_url, log, normalize_branches, should_exclude_from_stats
+from utils import (
+    display_url,
+    log,
+    normalize_branches,
+    patch_ssh_gitlab_url,
+    should_exclude_from_stats,
+)
 
 from .models import (
     Base,
@@ -78,7 +84,8 @@ class Indexer:
             old_commits = [commit.sha for commit in repo.commits]
             start_t = datetime.now()
 
-            for commit in PyDrillerRepository(clone_url, include_refs=True, include_remotes=True).traverse_commits():
+            url = patch_ssh_gitlab_url(clone_url)
+            for commit in PyDrillerRepository(url, include_refs=True, include_remotes=True).traverse_commits():
                 if commit.hash in old_commits:
                     # compare existing branch info and new branches
                     # update branches if they are different

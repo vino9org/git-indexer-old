@@ -91,7 +91,6 @@ def test_clone_to_browse_url():
         clone_to_browse_url("git@github.com:sloppycoder/k3s-fluxcd-vinolab.git")
         == "https://github.com/sloppycoder/k3s-fluxcd-vinolab"
     )
-    assert clone_to_browse_url("git@gitlab-sbc:group/stuff/xyz.git") == "https://gitlab.com/group/stuff/xyz"
     assert clone_to_browse_url("file://base_dir/def/my.git") == ""
 
 
@@ -122,7 +121,7 @@ def test_display_url():
     assert display_url("https://github.com/sloppy_coder/xyz.git") == "/sloppy_coder/xyz"
 
     assert (
-        display_url("git@gitlab-sbc:securemyphbank/rtd/pro/local-payment-service-chart.git", 64)
+        display_url("git@gitlab.com:securemyphbank/rtd/pro/local-payment-service-chart.git", 64)
         == "securemyphbank/rtd/pro/local-payment-service-chart"
     )
 
