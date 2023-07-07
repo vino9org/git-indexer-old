@@ -20,7 +20,14 @@ from utils import (
     should_exclude_from_stats,
 )
 
-from .models import Base, Commit, CommittedFile, ensure_author, ensure_repository
+from .models import (
+    Base,
+    Commit,
+    CommittedFile,
+    ensure_author,
+    ensure_repository,
+    load_commit,
+)
 from .stats import __STATS_SQL__
 
 
@@ -97,8 +104,10 @@ class Indexer:
                         self.session.add(old_commit)
                         n_branch_updates += 1
                 else:
-                    # it is a new commit
-                    new_commit = self._new_commit_(commit)
+                    # new commit in this repo, check if the repo is already exist in another repo
+                    new_commit = load_commit(self.session, commit.hash)
+                    if new_commit is None:
+                        new_commit = self._new_commit_(commit)
                     repo.commits.append(new_commit)
                     n_new_commits += 1
 
