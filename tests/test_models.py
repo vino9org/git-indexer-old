@@ -17,7 +17,7 @@ def test_models(session):
     author = session.scalars(select(Author).where(Author.name == "me")).first()
     assert author.id is not None
 
-    commit = session.scalars(select(Commit).where(Commit.sha == "123123123")).first()
+    commit = session.scalars(select(Commit).where(Commit.sha == "feb3a2837630c0e51447fc1d7e68d86f964a8440")).first()
     assert commit is not None
     # test commit to author relation
     assert commit.author_id == author.id
@@ -25,7 +25,7 @@ def test_models(session):
     assert len(commit.repos) == 2
     assert commit.repos[0].browse_url == "https://github.com/super/repo"
 
-    commit2 = session.scalars(select(Commit).where(Commit.sha == "12fed3433")).first()
+    commit2 = session.scalars(select(Commit).where(Commit.sha == "ee474544052762d314756bb7439d6dab73221d3d")).first()
     assert commit2 is not None and len(commit2.repos) == 1
 
     # test repo to commit many-to-many relation
@@ -76,7 +76,7 @@ def test_typical_indexing_flow(session):
     # 2. create new author
     author = ensure_author(session, name="dummy", email="dummy@nocode.com")
 
-    sha = "11223344"
+    sha = "feb3a2837630c0e51447fc1d7e68d86f964a8440"
     commit = load_commit(session, sha)
     if load_commit(session, sha) is None:
         commit = Commit(sha=sha, message="initial commit", author=author, created_at=datetime.now())

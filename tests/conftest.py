@@ -20,9 +20,9 @@ load_dotenv(find_dotenv(".env.test"))
 def seed_data(session):
     me = Author(name="me", email="mini@me", real_name="me", real_email="mini@me")
 
-    commit1 = Commit(sha="123123123", author=me, created_at=datetime.now())
-    commit2 = Commit(sha="12fed3433", author=me, created_at=datetime.now())
-    commit3 = Commit(sha="12fed3fff", author=me, created_at=datetime.now())
+    commit1 = Commit(sha="feb3a2837630c0e51447fc1d7e68d86f964a8440", author=me, created_at=datetime.now())
+    commit2 = Commit(sha="ee474544052762d314756bb7439d6dab73221d3d", author=me, created_at=datetime.now())
+    commit3 = Commit(sha="e2c8b79813b95c93e5b06c5a82e4c417d5020762", author=me, created_at=datetime.now())
 
     repo1 = Repository(clone_url="git@github.com:super/repo.git", repo_type="github", commits=[commit1, commit2])
     repo2 = Repository(clone_url="https://gitlab.com/dummy/repo.git", repo_type="gitlab", commits=[commit1, commit3])
