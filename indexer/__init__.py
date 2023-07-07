@@ -81,34 +81,34 @@ class Indexer:
             log(f"starting to index {display_url(clone_url)}")
 
             repo = ensure_repository(self.session, clone_url=clone_url, repo_type=git_repo_type)
-            old_commits = [commit.sha for commit in repo.commits]
+            # use list comprehension to force loading of commits
+            old_commits = [commit for commit in repo.commits]  # noqa: C416
+            old_hashes = [commit.sha for commit in old_commits]
+
             start_t = datetime.now()
 
             url = patch_ssh_gitlab_url(clone_url)
             for commit in PyDrillerRepository(url, include_refs=True, include_remotes=True).traverse_commits():
-                if commit.hash in old_commits:
-                    # compare existing branch info and new branches
-                    # update branches if they are different
+                # impose some timeout to avoid spending tons of time on very large repositories
+                if (datetime.now() - start_t).seconds > timeout:
+                    print(f"### indexing not done after {timeout} seconds, aborting {display_url(clone_url)}")
+                    continue
+
+                if commit.hash in old_hashes:
+                    # we've seen this commit before, just compare branches and update
+                    # if needed
                     old_commit = [git_commit for git_commit in repo.commits if git_commit.sha == commit.hash][0]
                     new_branches = normalize_branches(commit.branches)
                     if new_branches != old_commit.branches:
                         old_commit.branches = new_branches
                         self.session.add(old_commit)
                         processed += 1
-
-                    # move on to next commit
-                    continue
-
-                if (datetime.now() - start_t).seconds > timeout:
-                    print(f"### indexing not done after {timeout} seconds, aborting {display_url(clone_url)}")
-                    continue
-
-                # new commit
-                git_commit = load_commit(self.session, commit.hash)
-                if not git_commit:
-                    git_commit = self._new_commit_(commit)
-
-                repo.commits.append(git_commit)
+                else:
+                    # it is a new commit
+                    git_commit = load_commit(self.session, commit.hash)
+                    if not git_commit:
+                        git_commit = self._new_commit_(commit)
+                    repo.commits.append(git_commit)
 
                 processed += 1
                 if processed % 200 == 0 and show_progress:
