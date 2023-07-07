@@ -16,7 +16,7 @@ from pydriller.git import Git
 
 # files matches any of the regex will not be counted
 # towards commit stats
-IGNORE_PATTERNS = [
+_IGNORE_PATTERNS_ = [
     re.compile(
         "^(vendor|Pods|target|YoutuOCWrapper|vos-app-protection|vos-processor|\\.idea|\\.vscode)/."  # noqa: E501
     ),
@@ -50,6 +50,9 @@ def is_git_repo(path: str) -> bool:
         return True
     except InvalidGitRepositoryError:
         return False
+    except ValueError:
+        # this exception happens when a repo is empty
+        return False
 
 
 def match_any(path: str, patterns: str) -> bool:
@@ -64,9 +67,6 @@ def clone_to_browse_url(clone_url: str) -> str:
         http_url = clone_url
     elif url.scheme in ["ssh", "ssh+git"] or (url.scheme == "" and url.path.startswith("git@")):
         host, path = re.sub(r"^git@", "", url.path).split(":")
-        # if you put a hack in one place, you'll have to put a hack in all places :(((
-        if host == "gitlab-sbc":
-            host = "gitlab.com"
         http_url = f"https://{host}/{path}"
     return re.sub(r"\.git$", "", http_url)
 
@@ -76,7 +76,7 @@ def should_exclude_from_stats(path: str) -> bool:
     return true if the path should be ignore
     for calculating commit stats
     """
-    for regex in IGNORE_PATTERNS:
+    for regex in _IGNORE_PATTERNS_:
         if regex.match(path):
             return True
     return False

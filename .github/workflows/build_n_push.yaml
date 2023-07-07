@@ -33,7 +33,7 @@ jobs:
 
     - name: Unit tests
       run: |
-        pytest -v -s
+        pytest -v -s --cov=. --cov-report term
       env:
         GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -16,7 +16,9 @@
                 "--query",
                 "repo.lst",
                 "--filter",
-                "*"
+                "*",
+                "--db",
+                "~/tmp/t/test.db"
             ],
             "console": "integratedTerminal",
             "justMyCode": false

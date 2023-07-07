@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "git indexer"
-version = "0.6.0"
+version = "0.8.0"
 description = "index git commits to gather stats for analysis"
 authors = ["Li Lin <guru.lin@gmail.com>"]
 license = "MIT"
@@ -25,7 +25,7 @@ google-cloud-storage = "^2.10.0"
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2"
 pytest-mock = "^3.10"
-pytest-cov = "^4.0"
+pytest-cov = "4.1.0"
 mypy = "^1.4.1"
 pre-commit = "^3.3.3"
 
@@ -57,6 +57,9 @@ profile = "black"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
+# vscode cannot debug when coverage is enabled
+# add these command line options manually to run with coverage
+# addopts = "-v --cov=. --cov-report term"
 testpaths = [
     "tests",
 ]

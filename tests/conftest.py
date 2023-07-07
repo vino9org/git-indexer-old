@@ -46,7 +46,7 @@ def session(indexer):
 @pytest.fixture
 def local_repo(tmp_path):
     temp_dir = tempfile.mkdtemp(dir=tmp_path)
-    zip_file_path = os.path.abspath(f"{cwd}/data/repo1.zip")
+    zip_file_path = os.path.abspath(f"{cwd}/data/test_repos.zip")
     with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
         zip_ref.extractall(temp_dir)
 

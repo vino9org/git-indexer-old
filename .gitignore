@@ -16,6 +16,7 @@ test-report/
 .coverage
 coverage.xml
 pytest_junit.xml
+htmlcov/
 
 # mypy
 .mypy_cache/
