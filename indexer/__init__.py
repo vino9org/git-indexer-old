@@ -76,7 +76,7 @@ class Indexer:
     def index_repository(
         self, clone_url: str, git_repo_type: str = "", show_progress: bool = False, timeout: int = 28800
     ) -> int:
-        processed = 0
+        n_branch_update, n_new_commits = 0, 0
         try:
             log(f"starting to index {display_url(clone_url)}")
 
@@ -102,17 +102,17 @@ class Indexer:
                     if new_branches != old_commit.branches:
                         old_commit.branches = new_branches
                         self.session.add(old_commit)
-                        processed += 1
+                        n_branch_update += 1
                 else:
                     # it is a new commit
                     git_commit = load_commit(self.session, commit.hash)
                     if not git_commit:
                         git_commit = self._new_commit_(commit)
                     repo.commits.append(git_commit)
+                    n_new_commits += 1
 
-                processed += 1
-                if processed % 200 == 0 and show_progress:
-                    log(f"indexed {processed:5,} commits")
+                if (n_new_commits + n_branch_update) % 200 == 0 and show_progress:
+                    log(f"indexed {n_new_commits:5,} new commits and {n_branch_update:5,} branch updates")
 
             repo.last_indexed_at = datetime.now().astimezone().isoformat(timespec="seconds")
             self.session.add(repo)
@@ -124,10 +124,10 @@ class Indexer:
                 print(f"### unable to save commit {commit.hash} => {str(e)}\n{exc}", file=sys.stderr)
                 self.session.rollback()
 
-            if processed > 0:
-                log(f"indexed {processed:5,} commits in the repository")
+            if (n_new_commits + n_branch_update) > 0:
+                log(f"indexed {n_new_commits:5,} new commits and {n_branch_update:5,} branch updates in the repository")
 
-            return processed
+            return n_new_commits + n_branch_update
 
         except GitCommandError as e:
             print(f"{e._cmdline} returned {e.stderr} for {clone_url}")
