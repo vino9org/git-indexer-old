@@ -1,5 +1,6 @@
 import os
 import shutil
+import sqlite3
 import sys
 import tempfile
 import zipfile
@@ -32,8 +33,12 @@ def seed_data(session):
 
 
 @pytest.fixture(scope="session")
-def indexer():
-    indexer = Indexer(uri="sqlite:///:memory:")
+def indexer(tmpdir_factory):
+    db_file = tmpdir_factory.mktemp("git-indexer") / "tmp.db"
+    db = sqlite3.connect(db_file)
+    db.close()
+    os.environ["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_file}"
+    indexer = Indexer()
     yield indexer
 
 
