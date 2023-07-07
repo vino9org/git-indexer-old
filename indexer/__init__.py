@@ -20,14 +20,7 @@ from utils import (
     should_exclude_from_stats,
 )
 
-from .models import (
-    Base,
-    Commit,
-    CommittedFile,
-    ensure_author,
-    ensure_repository,
-    load_commit,
-)
+from .models import Base, Commit, CommittedFile, ensure_author, ensure_repository
 from .stats import __STATS_SQL__
 
 
@@ -76,43 +69,42 @@ class Indexer:
     def index_repository(
         self, clone_url: str, git_repo_type: str = "", show_progress: bool = False, timeout: int = 28800
     ) -> int:
-        n_branch_update, n_new_commits = 0, 0
+        n_branch_updates, n_new_commits = 0, 0
+
         try:
             log(f"starting to index {display_url(clone_url)}")
-
+            start_t = datetime.now()
             repo = ensure_repository(self.session, clone_url=clone_url, repo_type=git_repo_type)
+
             # use list comprehension to force loading of commits
             old_commits = [commit for commit in repo.commits]  # noqa: C416
             old_hashes = [commit.sha for commit in old_commits]
-
-            start_t = datetime.now()
 
             url = patch_ssh_gitlab_url(clone_url)  # kludge: workaround for some unfortunate ssh setup
             for commit in PyDrillerRepository(url, include_refs=True, include_remotes=True).traverse_commits():
                 # impose some timeout to avoid spending tons of time on very large repositories
                 if (datetime.now() - start_t).seconds > timeout:
                     print(f"### indexing not done after {timeout} seconds, aborting {display_url(clone_url)}")
-                    continue
+                    break
 
                 if commit.hash in old_hashes:
                     # we've seen this commit before, just compare branches and update
                     # if needed
-                    old_commit = [git_commit for git_commit in repo.commits if git_commit.sha == commit.hash][0]
+                    old_commit = [item for item in old_commits if item.sha == commit.hash][0]
                     new_branches = normalize_branches(commit.branches)
                     if new_branches != old_commit.branches:
                         old_commit.branches = new_branches
                         self.session.add(old_commit)
-                        n_branch_update += 1
+                        n_branch_updates += 1
                 else:
                     # it is a new commit
-                    git_commit = load_commit(self.session, commit.hash)
-                    if not git_commit:
-                        git_commit = self._new_commit_(commit)
-                    repo.commits.append(git_commit)
+                    new_commit = self._new_commit_(commit)
+                    repo.commits.append(new_commit)
                     n_new_commits += 1
 
-                if (n_new_commits + n_branch_update) % 200 == 0 and show_progress:
-                    log(f"indexed {n_new_commits:5,} new commits and {n_branch_update:5,} branch updates")
+                nn = n_new_commits + n_branch_updates
+                if nn > 0 and nn % 200 == 0 and show_progress:
+                    log(f"indexed {n_new_commits:5,} new commits and {n_branch_updates:5,} branch updates")
 
             repo.last_indexed_at = datetime.now().astimezone().isoformat(timespec="seconds")
             self.session.add(repo)
@@ -124,10 +116,12 @@ class Indexer:
                 print(f"### unable to save commit {commit.hash} => {str(e)}\n{exc}", file=sys.stderr)
                 self.session.rollback()
 
-            if (n_new_commits + n_branch_update) > 0:
-                log(f"indexed {n_new_commits:5,} new commits and {n_branch_update:5,} branch updates in the repository")
+            if (n_new_commits + n_branch_updates) > 0:
+                log(
+                    f"indexed {n_new_commits:5,} new commits and {n_branch_updates:5,} branch updates in the repository"
+                )
 
-            return n_new_commits + n_branch_update
+            return n_new_commits + n_branch_updates
 
         except GitCommandError as e:
             print(f"{e._cmdline} returned {e.stderr} for {clone_url}")
