@@ -87,7 +87,7 @@ class Indexer:
 
             start_t = datetime.now()
 
-            url = patch_ssh_gitlab_url(clone_url)
+            url = patch_ssh_gitlab_url(clone_url)  # kludge: workaround for some unfortunate ssh setup
             for commit in PyDrillerRepository(url, include_refs=True, include_remotes=True).traverse_commits():
                 # impose some timeout to avoid spending tons of time on very large repositories
                 if (datetime.now() - start_t).seconds > timeout:
