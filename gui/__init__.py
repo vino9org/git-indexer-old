@@ -1,15 +1,21 @@
 import os
 import re
+import warnings
 
 from dotenv import load_dotenv
 from flask import Flask, flash, redirect, render_template, request, url_for
-from flask_bootstrap import Bootstrap5
 from flask_sqlalchemy import SQLAlchemy
-from flask_wtf import FlaskForm
 from werkzeug.middleware.proxy_fix import ProxyFix
 from wtforms.fields import StringField, SubmitField
 
 from indexer.models import Author, Commit, Repository
+
+with warnings.catch_warnings():
+    # these packages uses flask.Markup
+    # suppress the warning when running tests
+    warnings.simplefilter("ignore")
+    from flask_bootstrap import Bootstrap5  # noqa: E402
+    from flask_wtf import FlaskForm  # noqa: E402
 
 __PAGE_SIZE__ = 50
 
