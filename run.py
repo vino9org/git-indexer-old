@@ -84,7 +84,7 @@ def run_mirror(args: argparse.Namespace) -> None:
         enumerator = partial(enumerate_gitlab_repos)
     elif args.source == "github":
         enumerator = partial(enumerate_github_repos)
-    else:
+    else:  # pragma: no cover
         print("don't nkow how to mirror local repos")
         return None
 
@@ -230,7 +230,7 @@ def parse_args(args: list[str]) -> argparse.Namespace:
     return ns
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     args = parse_args(sys.argv[1:])
     if args.mirror:
         run_mirror(args)

@@ -88,7 +88,7 @@ class Indexer:
             url = patch_ssh_gitlab_url(clone_url)  # kludge: workaround for some unfortunate ssh setup
             for commit in PyDrillerRepository(url, include_refs=True, include_remotes=True).traverse_commits():
                 # impose some timeout to avoid spending tons of time on very large repositories
-                if (datetime.now() - start_t).seconds > timeout:
+                if (datetime.now() - start_t).seconds > timeout:  # pragma: no cover
                     print(f"### indexing not done after {timeout} seconds, aborting {display_url(clone_url)}")
                     break
 
@@ -134,7 +134,7 @@ class Indexer:
             print(f"{e._cmdline} returned {e.stderr} for {clone_url}")
         except DBAPIError as e:
             print(f"{e.statement} returned {e._message}")
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
             exc = traceback.format_exc()
             print(f"Exception indexing repository {clone_url} => {str(e)}\n{exc}")
 

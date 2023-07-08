@@ -56,3 +56,13 @@ def test_run_indexer(tmp_path):
         shlex.split(f"--index --query {__TEST_GITHUB_REPO___} --source github --filter * --db {tmp_path}/tmp.db")
     )
     run.run_indexer(args)
+
+
+def test_enumberate_from_file(tmp_path):
+    repo_lst = str(tmp_path / "repos.txt")
+    with open(repo_lst, "w") as f:
+        f.write("/user/repo1.git\n")
+        f.write("#/user/repo2.git\n")
+
+    repos = list(run.enumberate_from_file(repo_lst, ""))
+    assert len(repos) == 1 and "repo1" in repos[0]
