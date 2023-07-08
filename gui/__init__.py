@@ -40,10 +40,14 @@ bootstrap = Bootstrap5(app)
 
 def init_db(app: Flask) -> SQLAlchemy:
     uri = os.environ.get("SQLALCHEMY_DATABASE_URI")
-    if uri is None:
-        uri = f"sqlite:////{os.getcwd()}/db/git-indexer.db"
-    print(f"connecting to {uri}")
+    sqlite_file = os.environ.get("SQLITE_FILE")
+    if uri is None and sqlite_file is None:
+        raise ValueError("please set either SQLALCHEMY_DATABASE_URI or SQLITE_FILE")
+    elif uri is None:
+        uri = f"sqlite:///{os.path.abspath(os.path.expanduser(sqlite_file))}"
+
     app.config["SQLALCHEMY_DATABASE_URI"] = uri
+    print(f"connecting to {uri}")
     return SQLAlchemy(app)
 
 
