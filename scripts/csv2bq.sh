@@ -14,10 +14,10 @@ csv2bq() {
 
     gsutil cp $file.csv gs://vinolab/$file.csv
 
-    bq rm -f -t dev1.$file
-    bq load --autodetect --source_format=CSV dev1.$file_1 gs://vinolab/$file.csv
-
-    # rm -rf $file.csv
+    bq rm -f -t dev1."${file}_1"
+    bq load --schema=schema.json --skip_leading_rows=1 --source_format=CSV dev1."${file}_1" gs://vinolab/$file.csv
+    bq load --schema=schema.json --skip_leading_rows=1 --source_format=CSV dev1."${file}
+    rm -rf $file.csv
 
 }
 
