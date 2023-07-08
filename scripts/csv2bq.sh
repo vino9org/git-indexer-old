@@ -10,12 +10,12 @@ csv2bq() {
         exit -1
     fi
 
-    echo uploading $1.csv to bigquery
+    echo uploading $file.csv to bigquery
 
-    gsutil cp $file.csv gs://vinolab/$file.1.csv
+    gsutil cp $file.csv gs://vinolab/$file.csv
 
-    bq rm -f -t dev1.$file.1
-    bq load --autodetect --source_format=CSV dev1.$file gs://vinolab/$file.csv
+    bq rm -f -t dev1.$file
+    bq load --autodetect --source_format=CSV dev1.$file_1 gs://vinolab/$file.csv
 
     # rm -rf $file.csv
 
