@@ -44,6 +44,9 @@ def test_run_mirror(tmp_path):
             f"--mirror --query {__TEST_GITHUB_REPO___} --source github --filter * --output {tmp_path.as_posix()}/ --overwrite"  # noqa E501
         )
     )
+    # 1st run should trigger a git clone
+    run.run_mirror(args)
+    # 2nd run should trigger a fetch
     run.run_mirror(args)
 
 

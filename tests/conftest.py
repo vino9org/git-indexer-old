@@ -34,12 +34,17 @@ def seed_data(session):
 
 @pytest.fixture(scope="session")
 def indexer(tmpdir_factory):
-    db_file = tmpdir_factory.mktemp("git-indexer") / "tmp.db"
+    tmp_dir = tmpdir_factory.mktemp("git-indexer")
+    db_file = tmp_dir / "tmp.db"
     db = sqlite3.connect(db_file)
     db.close()
     os.environ["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_file}"
     indexer = Indexer()
+
     yield indexer
+
+    indexer.close()
+    shutil.rmtree(tmp_dir)
 
 
 @pytest.fixture(scope="session")
@@ -50,11 +55,11 @@ def session(indexer):
 
 @pytest.fixture
 def local_repo(tmp_path):
-    temp_dir = tempfile.mkdtemp(dir=tmp_path)
+    repo_base = tempfile.mkdtemp(dir=tmp_path)
     zip_file_path = os.path.abspath(f"{cwd}/data/test_repos.zip")
     with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
-        zip_ref.extractall(temp_dir)
+        zip_ref.extractall(repo_base)
 
-    yield temp_dir
+    yield repo_base
 
-    shutil.rmtree(temp_dir)
+    shutil.rmtree(repo_base)

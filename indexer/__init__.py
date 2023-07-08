@@ -38,14 +38,12 @@ class Indexer:
         env_uri = os.environ.get("SQLALCHEMY_DATABASE_URI")
         if uri:
             self.uri = uri
-            self.is_mem_db = False
         elif env_uri:
             self.uri = env_uri
-            self.is_mem_db = False
         else:
             self.uri = "sqlite:///:memory:"
-            self.is_mem_db = True
 
+        self.is_mem_db = ":memory:" in self.uri
         self.db_file = db_file
         self.engine = create_engine(self.uri, echo=echo)
         self.session = Session(self.engine)
