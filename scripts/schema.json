@@ -165,17 +165,17 @@
     "type": "STRING"
   },
   {
-    "mode": "REQUIRED",
+    "mode": "NULLABLE",
     "name": "repo_group",
     "type": "STRING"
   },
   {
-    "mode": "REQUIRED",
+    "mode": "NULLABLE",
     "name": "repo_type",
     "type": "STRING"
   },
   {
-    "mode": "REQUIRED",
+    "mode": "NULLABLE",
     "name": "component",
     "type": "STRING"
   },
@@ -185,7 +185,7 @@
     "type": "STRING"
   },
   {
-    "mode": "REQUIRED",
+    "mode": "NULLABLE",
     "name": "browse_url",
     "type": "STRING"
   },
@@ -200,7 +200,7 @@
     "type": "BOOLEAN"
   },
   {
-    "mode": "REQUIRED",
+    "mode": "NULLABLE",
     "name": "last_indexed_at",
     "type": "TIMESTAMP"
   }
