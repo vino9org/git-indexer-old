@@ -101,8 +101,6 @@ def run_indexer(args: argparse.Namespace) -> None:
     # after indexing is done we'll save the database in memory back to disk
     n_repos, n_commits = 0, 0
 
-    indexer = Indexer(db_file=os.path.expanduser(args.db))
-
     if args.source == "gitlab":
         enumerator = partial(enumerate_gitlab_repos)
     elif args.source == "github":
@@ -115,16 +113,22 @@ def run_indexer(args: argparse.Namespace) -> None:
         print(f"don't know how to index {args.source}")
         return
 
-    for repo_url in enumerator(args.query):
-        if match_any(repo_url, args.filter):
-            if not args.dry_run:
-                source = "other" if args.source == "list" else args.source
-                n_commits += indexer.index_repository(repo_url, source, show_progress=True)
-                n_repos += 1
+    indexer = Indexer(db_file=os.path.expanduser(args.db))
 
-    if n_commits:
+    # speical undocumented query string for update the stats only
+    # do not index any repos
+    if args.query != "_stats_":
+        for repo_url in enumerator(args.query):
+            if match_any(repo_url, args.filter):
+                if not args.dry_run:
+                    source = "other" if args.source == "list" else args.source
+                    n_commits += indexer.index_repository(repo_url, source, show_progress=True)
+                    n_repos += 1
+
+    if n_commits or args.query == "_stats_":
         indexer.update_commit_stats()
-        indexer.close()
+
+    indexer.close()
 
     if args.upload:
         suffix = re.sub(r"[^0-9.]", "", timestamp())
