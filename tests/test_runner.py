@@ -37,7 +37,7 @@ def test_cmdline_options():
 
 
 @pytest.mark.skipif(os.environ.get("GITHUB_TOKEN") is not None, reason="does not work in Github action, no ssh key")
-def test_run_mirror(tmp_path, github_test_repo):
+def test_run_mirror(tmp_path, github_test_repo, capfd):
     args = run.parse_args(
         shlex.split(
             f"--mirror --query {github_test_repo} --source github --filter * --output {tmp_path.as_posix()}/ --overwrite"  # noqa E501
@@ -45,8 +45,12 @@ def test_run_mirror(tmp_path, github_test_repo):
     )
     # 1st run should trigger a git clone
     run.run_mirror(args)
-    # 2nd run should trigger a fetch
+    captured = capfd.readouterr()
+    assert "git clone --mirror" in captured.out
+
     run.run_mirror(args)
+    captured = capfd.readouterr()
+    assert "git fetch --prune" in captured.out  # 2nd run should trigger a fetch
 
 
 @pytest.mark.skipif(os.environ.get("GITHUB_TOKEN") is not None, reason="does not work in Github action, no ssh key")
