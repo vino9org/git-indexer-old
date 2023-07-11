@@ -1,9 +1,10 @@
 import os
 import re
+from dataclasses import dataclass
 from typing import Any, List, Optional
 
 from sqlalchemy import Boolean, Column, Float, ForeignKey, Integer, String, Table
-from sqlalchemy.orm import Mapped, Session, mapped_column, relationship
+from sqlalchemy.orm import Mapped, Session, mapped_column, registry, relationship
 from sqlalchemy.orm.decl_api import DeclarativeMeta
 
 from utils import clone_to_browse_url
@@ -11,8 +12,15 @@ from utils import clone_to_browse_url
 _REPO_TYPES_ = ["gitlab", "gitlab_private", "github", "bitbucket", "bitbucket_private", "local", "other"]
 
 
+mapper_registry = registry()
+
+
 class Base(metaclass=DeclarativeMeta):
     __abstract__ = True
+    registry = mapper_registry
+    metadata = mapper_registry.metadata
+
+    __init__ = mapper_registry.constructor
 
 
 repo_to_commit_table = Table(
@@ -23,14 +31,15 @@ repo_to_commit_table = Table(
 )
 
 
+@dataclass
 class Repository(Base):
     __tablename__ = "repositories"
 
     id: Mapped[int] = mapped_column(primary_key=True)  # noqa: A003,VNE003
     repo_type: Mapped[str] = mapped_column(String(20))
     repo_name: Mapped[str] = mapped_column(String(128))
-    repo_group: Mapped[str] = mapped_column(String(64), nullable=True)
-    component: Mapped[str] = mapped_column(String(64), nullable=True)
+    repo_group: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    component: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     clone_url: Mapped[str] = mapped_column(String(256))
     browse_url: Mapped[str] = mapped_column(String(256))
     include_in_stats: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -41,6 +50,11 @@ class Repository(Base):
     # create a constructor to set browse_url based on clone_url
     def __init__(self, **kw: Any) -> None:
         super().__init__(**kw)
+
+        if self.id:
+            # already initialized, e.g. loaded from database
+            # skip the rest of the initialization
+            return
 
         if self.repo_type and self.repo_type not in _REPO_TYPES_:
             raise ValueError(f"repo_type must be one of {_REPO_TYPES_}")
@@ -82,6 +96,7 @@ class Repository(Base):
             return ""
 
 
+@dataclass
 class Commit(Base):
     __tablename__ = "commits"
 
@@ -117,6 +132,7 @@ class Commit(Base):
         return f"commits(id={self.sha!r} in message={self.message[:20]!r})"
 
 
+@dataclass
 class CommittedFile(Base):
     __tablename__ = "committed_files"
 
@@ -145,6 +161,9 @@ class CommittedFile(Base):
     def __init__(self, **kw: Any) -> None:
         super().__init__(**kw)
 
+        if self.id:
+            return
+
         main, ext = os.path.splitext(self.file_path)
         if main.startswith("."):
             self.file_type = "hiden"
@@ -157,6 +176,7 @@ class CommittedFile(Base):
         return f"commits(id={self.id!r} in commit {self.commit_sha!r})"
 
 
+@dataclass
 class Author(Base):
     __tablename__ = "authors"
 
@@ -165,9 +185,9 @@ class Author(Base):
     email: Mapped[str] = mapped_column(String(1024))
     real_name: Mapped[str] = mapped_column(String(128))
     real_email: Mapped[str] = mapped_column(String(1024))
-    company: Mapped[str] = mapped_column(String(64), nullable=True)
-    team: Mapped[str] = mapped_column(String(64), nullable=True)
-    group: Mapped[str] = mapped_column(String(64), nullable=True)
+    company: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    team: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    group: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
 
     # relationships
     commits: Mapped[List["Commit"]] = relationship("Commit", back_populates="author")

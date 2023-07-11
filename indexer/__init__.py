@@ -5,6 +5,7 @@ import traceback
 from datetime import datetime
 from typing import Optional, cast
 
+from flask_sqlalchemy import SQLAlchemy
 from git.exc import GitCommandError
 from pydriller import Repository as PyDrillerRepository
 from pydriller.domain.commit import Commit as PyDrillerCommit
@@ -32,42 +33,72 @@ from .stats import __STATS_SQL__
 
 
 class Indexer:
-    def __init__(self, uri: Optional[str] = None, db_file: Optional[str] = None, echo: bool = False):
-        env_uri = os.environ.get("SQLALCHEMY_DATABASE_URI")
-        if uri:
-            self.uri = uri
-        elif env_uri:
-            self.uri = env_uri
+    def __init__(
+        self,
+        uri: Optional[str] = None,
+        db_file: str = "",
+        echo: bool = False,
+        flask_db: Optional[SQLAlchemy] = None,
+    ):
+        if flask_db:
+            self._init_from_flask_db(flask_db)
+            self.db_file = ""
         else:
-            self.uri = "sqlite:///:memory:"
+            env_uri = os.environ.get("SQLALCHEMY_DATABASE_URI")
+            if uri:
+                self.uri = uri
+            elif env_uri:
+                self.uri = env_uri
+            else:
+                raise ValueError("SQLALCHEMY_DATABASE_URI is not set")
 
+            self._init_db_(self.uri, db_file, echo)
+
+        Base.metadata.create_all(self.engine)
+        self.session = Session(self.engine)
+
+    def _init_db_(self, uri: str, db_file: str, echo: bool = False):
         self.is_mem_db = ":memory:" in self.uri
         self.db_file = db_file
         self.engine = create_engine(self.uri, echo=echo)
-        self.session = Session(self.engine)
 
         if self.is_mem_db and db_file and os.path.isfile(db_file):
             disk_db = sqlite3.connect(db_file)
             disk_db.backup(cast(sqlite3.dbapi2.Connection, self.session.connection().connection.driver_connection))
             log(f"loaded database {db_file} into memory")
 
-        Base.metadata.create_all(self.engine)
+    def _init_from_flask_db(self, flask_db: SQLAlchemy):
+        """
+        use a DB object from Flask to initialize the indexer,
+        in order to share the database with Flask application.
+        Since flask-sqlalchemy initializes the database independently,
+        we need to let it do all its initialization first, the extract
+        engine from it.
+        """
+        self.engine = flask_db.engines[None]
+        if self.engine is None:
+            raise ValueError("cannot find engine from flask db")
+        self.uri = str(self.engine.engine.url)
+        self.is_mem_db = ":memory:" in self.uri
 
     def close(self):
         self.session.close()
 
         if self.is_mem_db and self.db_file:
-            # export database to file
-            # write to temp file first then rename to avoid potentially corrupting the database
-            tmp_file = self.db_file + ".new"
-            file_conn = sqlite3.connect(tmp_file)
-            self.session.connection().connection.driver_connection.backup(file_conn)
-            file_conn.close()
+            self._export_db_(self.db_file)
 
-            if os.path.exists(self.db_file):
-                os.unlink(self.db_file)
-            os.rename(tmp_file, self.db_file)
-            log(f"saved database to {self.db_file}")
+    def _export_db_(self, dbf: str):
+        # export database to file
+        # write to temp file first then rename to avoid potentially corrupting the database
+        tmp_file = dbf + ".new"
+        file_conn = sqlite3.connect(tmp_file)
+        self.session.connection().connection.driver_connection.backup(file_conn)  # type: ignore   #it works...
+        file_conn.close()
+
+        if dbf and os.path.exists(dbf):
+            os.unlink(dbf)
+        os.rename(tmp_file, dbf)
+        log(f"saved database to {dbf}")
 
     def index_repository(
         self, clone_url: str, git_repo_type: str = "", show_progress: bool = False, timeout: int = 28800
@@ -85,26 +116,27 @@ class Indexer:
                 old_commits[commit.sha] = commit
 
             url = patch_ssh_gitlab_url(clone_url)  # kludge: workaround for some unfortunate ssh setup
-            for commit in PyDrillerRepository(url, include_refs=True, include_remotes=True).traverse_commits():
+            for git_commit in PyDrillerRepository(url, include_refs=True, include_remotes=True).traverse_commits():
                 # impose some timeout to avoid spending tons of time on very large repositories
-                if (datetime.now() - start_t).seconds > timeout:  # pragma: no cover
+                if (datetime.now() - start_t).seconds > timeout:
                     print(f"### indexing not done after {timeout} seconds, aborting {display_url(clone_url)}")
                     break
 
-                if commit.hash in old_commits:
+                git_commit_hash = git_commit.hash
+                if git_commit_hash in old_commits:
                     # we've seen this commit before, just compare branches and update
                     # if needed
-                    old_commit = old_commits[commit.hash]
-                    new_branches = normalize_branches(commit.branches)
+                    old_commit = old_commits[git_commit_hash]
+                    new_branches = normalize_branches(git_commit.branches)
                     if new_branches != old_commit.branches:
                         old_commit.branches = new_branches
                         self.session.add(old_commit)
                         n_branch_updates += 1
                 else:
                     # new commit in this repo, check if the repo is already exist in another repo
-                    new_commit = load_commit(self.session, commit.hash)
+                    new_commit = load_commit(self.session, git_commit_hash)
                     if new_commit is None:
-                        new_commit = self._new_commit_(commit)
+                        new_commit = self._new_commit_(git_commit)
                     repo.commits.append(new_commit)
                     n_new_commits += 1
 
@@ -119,7 +151,7 @@ class Indexer:
                 self.session.commit()
             except Exception as e:
                 exc = traceback.format_exc()
-                print(f"### unable to save commit {commit.hash} => {str(e)}\n{exc}", file=sys.stderr)
+                print(f"### unable to save commit {git_commit_hash} => {str(e)}\n{exc}", file=sys.stderr)
                 self.session.rollback()
 
             if (n_new_commits + n_branch_updates) > 0:
@@ -133,7 +165,7 @@ class Indexer:
             print(f"{e._cmdline} returned {e.stderr} for {clone_url}")
         except DBAPIError as e:
             print(f"{e.statement} returned {e._message}")
-        except Exception as e:  # pragma: no cover
+        except Exception as e:
             exc = traceback.format_exc()
             print(f"Exception indexing repository {clone_url} => {str(e)}\n{exc}")
 

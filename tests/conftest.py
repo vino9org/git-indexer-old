@@ -1,6 +1,5 @@
 import os
 import shutil
-import sqlite3
 import sys
 import tempfile
 import zipfile
@@ -16,6 +15,7 @@ from indexer import Indexer  # noqa: E402   sys.path should be set prior to impo
 from indexer.models import Author, Commit, Repository  # noqa: E402
 
 load_dotenv(find_dotenv(".env.test"))
+os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
 
 
 def seed_data(session):
@@ -33,18 +33,20 @@ def seed_data(session):
 
 
 @pytest.fixture(scope="session")
-def indexer(tmpdir_factory):
-    tmp_dir = tmpdir_factory.mktemp("git-indexer")
-    db_file = tmp_dir / "tmp.db"
-    db = sqlite3.connect(db_file)
-    db.close()
-    os.environ["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_file}"
-    indexer = Indexer()
+def indexer():
+    # import flask app in order to initialize database
+    # then we pass it Indexer to use the same database
+    from gui import (  # noqa: E402  must be after setting the SQLALCHEMY_DATABASE_URI
+        app,
+        db,
+    )
+
+    with app.app_context():
+        indexer = Indexer(flask_db=db)
 
     yield indexer
 
     indexer.close()
-    shutil.rmtree(tmp_dir)
 
 
 @pytest.fixture(scope="session")

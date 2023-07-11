@@ -84,6 +84,7 @@ mypy_path = "."
 module = [
     "dataclasses",
     "pydriller",
+    "pydriller.git",
     "pydriller.domain.commit",
     "flask_bootstrap",
     "flask_wtf",
