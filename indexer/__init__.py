@@ -3,7 +3,7 @@ import sqlite3
 import sys
 import traceback
 from datetime import datetime
-from typing import Optional, cast
+from typing import Optional
 
 from flask_sqlalchemy import SQLAlchemy
 from git.exc import GitCommandError
@@ -50,21 +50,21 @@ class Indexer:
             elif env_uri:
                 self.uri = env_uri
             else:
-                raise ValueError("SQLALCHEMY_DATABASE_URI is not set")
+                self.uri = "sqlite:///:memory:"
 
             self._init_db_(self.uri, db_file, echo)
 
         Base.metadata.create_all(self.engine)
-        self.session = Session(self.engine)
 
     def _init_db_(self, uri: str, db_file: str, echo: bool = False):
         self.is_mem_db = ":memory:" in self.uri
         self.db_file = db_file
         self.engine = create_engine(self.uri, echo=echo)
+        self.session = Session(self.engine)
 
         if self.is_mem_db and db_file and os.path.isfile(db_file):
             disk_db = sqlite3.connect(db_file)
-            disk_db.backup(cast(sqlite3.dbapi2.Connection, self.session.connection().connection.driver_connection))
+            disk_db.backup(self.session.connection().connection.driver_connection)  # type: ignore   #it works...
             log(f"loaded database {db_file} into memory")
 
     def _init_from_flask_db(self, flask_db: SQLAlchemy):
@@ -80,6 +80,7 @@ class Indexer:
             raise ValueError("cannot find engine from flask db")
         self.uri = str(self.engine.engine.url)
         self.is_mem_db = ":memory:" in self.uri
+        self.session = Session(self.engine)
 
     def close(self):
         self.session.close()
