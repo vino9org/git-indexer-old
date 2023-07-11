@@ -3,20 +3,17 @@ import re
 from typing import Any, List, Optional
 
 from sqlalchemy import Boolean, Column, Float, ForeignKey, Integer, String, Table
-from sqlalchemy.orm import (
-    Mapped,
-    Session,
-    declarative_base,
-    mapped_column,
-    relationship,
-)
+from sqlalchemy.orm import Mapped, Session, mapped_column, relationship
+from sqlalchemy.orm.decl_api import DeclarativeMeta
 
 from utils import clone_to_browse_url
 
 _REPO_TYPES_ = ["gitlab", "gitlab_private", "github", "bitbucket", "bitbucket_private", "local", "other"]
 
 
-Base = declarative_base()
+class Base(metaclass=DeclarativeMeta):
+    __abstract__ = True
+
 
 repo_to_commit_table = Table(
     "repo_to_commits",

@@ -32,8 +32,6 @@ from .stats import __STATS_SQL__
 
 
 class Indexer:
-    # TODO: add proper exception catching and printing mechanism
-
     def __init__(self, uri: Optional[str] = None, db_file: Optional[str] = None, echo: bool = False):
         env_uri = os.environ.get("SQLALCHEMY_DATABASE_URI")
         if uri:

@@ -5,7 +5,7 @@ import shlex
 import subprocess
 import sys
 from functools import partial
-from typing import Iterable
+from typing import Iterator
 
 from dotenv import load_dotenv
 
@@ -23,7 +23,7 @@ from utils import (
 load_dotenv()
 
 
-def enumberate_from_file(source_file: str, query: str) -> Iterable[str]:
+def enumberate_from_file(source_file: str, query: str) -> Iterator[str]:
     with open(source_file, "r") as f:
         for line in f.readlines():
             line = line.strip()

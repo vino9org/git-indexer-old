@@ -29,7 +29,7 @@ def init_app() -> Flask:
 
     if os.environ.get("KUBERNETES_SERVICE_HOST"):
         print("running in kubernetes, using proxy fix")
-        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)  # type: ignore
 
     return app
 

@@ -5,7 +5,7 @@ import socket
 import sys
 import warnings
 from datetime import datetime
-from typing import Iterator, List, Optional
+from typing import Iterator, Optional, Set
 from urllib.parse import urlparse
 
 import gitlab
@@ -167,7 +167,7 @@ def upload_file(source_file: str, destination: str) -> bool:
         return False
 
 
-def normalize_branches(branches: List[str]) -> str:
+def normalize_branches(branches: Set[str]) -> str:
     """
     normalize list of branch names into a string with comma sperated branches names
     branch names will be shorted by the following logic:
