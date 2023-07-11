@@ -82,8 +82,9 @@ class Indexer:
             repo = ensure_repository(self.session, clone_url=clone_url, repo_type=git_repo_type)
 
             # use list comprehension to force loading of commits
-            old_commits = [commit for commit in repo.commits]  # noqa: C416
-            old_hashes = [commit.sha for commit in old_commits]
+            old_commits = {}
+            for commit in repo.commits:
+                old_commits[commit.sha] = commit
 
             url = patch_ssh_gitlab_url(clone_url)  # kludge: workaround for some unfortunate ssh setup
             for commit in PyDrillerRepository(url, include_refs=True, include_remotes=True).traverse_commits():
@@ -92,10 +93,10 @@ class Indexer:
                     print(f"### indexing not done after {timeout} seconds, aborting {display_url(clone_url)}")
                     break
 
-                if commit.hash in old_hashes:
+                if commit.hash in old_commits:
                     # we've seen this commit before, just compare branches and update
                     # if needed
-                    old_commit = [item for item in old_commits if item.sha == commit.hash][0]
+                    old_commit = old_commits[commit.hash]
                     new_branches = normalize_branches(commit.branches)
                     if new_branches != old_commit.branches:
                         old_commit.branches = new_branches
