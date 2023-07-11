@@ -1,28 +1,27 @@
 import os
 
 import pytest
-from constants import __TEST_GITHUB_REPO___, __TEST_GITLAB_REPO___
 from sqlalchemy import text
 
 from indexer import Indexer
 from indexer.models import ensure_repository
 
 
-def test_index_github_repo(indexer):
-    assert indexer.index_repository(f"https://github.com/{__TEST_GITHUB_REPO___}.git") > 3
+def test_index_github_repo(indexer, github_test_repo):
+    assert indexer.index_repository(f"https://github.com/{github_test_repo}.git") > 3
 
 
 @pytest.mark.skipif(os.environ.get("GITLAB_TOKEN") is None, reason="gitlab token not available")
-def test_index_gitlab_repo(indexer):
-    assert indexer.index_repository(f"https://gitlab.com/vino9/{__TEST_GITLAB_REPO___}") > 0
+def test_index_gitlab_repo(indexer, gitlab_test_repo):
+    assert indexer.index_repository(f"https://gitlab.com/vino9/{gitlab_test_repo}") > 0
 
 
-def test_memory_db_handling(tmp_path):
+def test_memory_db_handling(tmp_path, github_test_repo):
     db_file = tmp_path / "test.db"
     db_file.touch()
 
     indexer = Indexer(uri="sqlite:///:memory:", db_file=str(db_file))
-    indexer.index_repository(f"https://github.com/{__TEST_GITHUB_REPO___}.git")
+    indexer.index_repository(f"https://github.com/{github_test_repo}.git")
     indexer.close()
 
     assert os.path.isfile(db_file)

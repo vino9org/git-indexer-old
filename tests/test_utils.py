@@ -1,7 +1,6 @@
 import os
 
 import pytest
-from constants import __TEST_GITHUB_REPO___, __TEST_GITLAB_REPO___
 
 from utils import (
     clone_to_browse_url,
@@ -100,13 +99,13 @@ def test_enumerate_local_repos(local_repo):
 
 
 @pytest.mark.skipif(os.environ.get("GITLAB_TOKEN") is None, reason="gitlab token not available")
-def test_enumerate_gitlab_repos():
-    repos = list(enumerate_gitlab_repos(__TEST_GITLAB_REPO___))
+def test_enumerate_gitlab_repos(gitlab_test_repo):
+    repos = list(enumerate_gitlab_repos(gitlab_test_repo))
     assert len(repos) > 0
 
 
-def test_enumerate_github_repos():
-    repos = list(enumerate_github_repos(__TEST_GITHUB_REPO___))
+def test_enumerate_github_repos(github_test_repo):
+    repos = list(enumerate_github_repos(github_test_repo))
     assert len(repos) > 0
 
 

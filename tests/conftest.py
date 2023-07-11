@@ -63,3 +63,13 @@ def local_repo(tmp_path):
     yield repo_base
 
     shutil.rmtree(repo_base)
+
+
+@pytest.fixture
+def github_test_repo():
+    return "sloppycoder/hello"
+
+
+@pytest.fixture
+def gitlab_test_repo():
+    return "test-project-1.git"
