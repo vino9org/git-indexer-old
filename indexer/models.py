@@ -1,9 +1,19 @@
 import os
 import re
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, List, Optional
 
-from sqlalchemy import Boolean, Column, Float, ForeignKey, Integer, String, Table
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Table,
+)
 from sqlalchemy.orm import Mapped, Session, mapped_column, registry, relationship
 from sqlalchemy.orm.decl_api import DeclarativeMeta
 
@@ -43,6 +53,7 @@ class Repository(Base):
     clone_url: Mapped[str] = mapped_column(String(256))
     browse_url: Mapped[str] = mapped_column(String(256))
     include_in_stats: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     last_indexed_at: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
 
     commits: Mapped[List["Commit"]] = relationship(secondary=repo_to_commit_table, back_populates="repos")
@@ -104,6 +115,7 @@ class Commit(Base):
     branches: Mapped[str] = mapped_column(String(1024), default="[]")
     message: Mapped[str] = mapped_column(String(2048), default="")
     created_at: Mapped[str] = mapped_column(String(32))
+    created_ts: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
 
     # metrics by pydriller
     is_merge: Mapped[bool] = mapped_column(Boolean, default=False)
