@@ -111,6 +111,7 @@ class Indexer:
             start_t = datetime.now()
             repo = ensure_repository(self.session, clone_url=clone_url, repo_type=git_repo_type)
             if repo.is_active is False:
+                log(f"skipping inactive repository {display_url(clone_url)}")
                 return 0
 
             # use list comprehension to force loading of commits
