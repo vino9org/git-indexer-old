@@ -1,8 +1,10 @@
 #! /bin/bash
 
+# export data from sqlite to csv and upload to google cloud storage
+
 set -e
 
-csv2bq() {
+csv2gs() {
     file=$1
 
     if [ ! -f "$file.csv" ]; then
@@ -13,10 +15,6 @@ csv2bq() {
     echo uploading $file.csv to bigquery
 
     gsutil cp $file.csv gs://vinolab/$file.csv
-
-    bq rm -f -t dev1."${file}"_1
-    bq load --schema=schema.json --skip_leading_rows=1 --source_format=CSV dev1."${file}_1" gs://vinolab/$file.csv
-    rm -rf $file.csv
 
 }
 
@@ -36,6 +34,6 @@ EOF
 }
 
 sqlite_to_csv $1
-csv2bq all_commit_data
+csv2gs all_commit_data
 
 
