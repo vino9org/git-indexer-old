@@ -1,6 +1,6 @@
 from sqlalchemy import text
 
-__STATS_SQL__ = [
+STATS_SQL = [
     text(
         """
     update commits
@@ -65,6 +65,7 @@ __STATS_SQL__ = [
             authors."group" as author_group,
             commits.sha,
             commits.created_at as commit_date,
+            commits.created_ts as commit_date_ts,
             commits.is_merge,
             commits.n_lines as commit_n_lines,
             commits.n_files as commit_n_files,
@@ -104,3 +105,8 @@ __STATS_SQL__ = [
         """,
     ),
 ]
+
+
+QUERY_SQL = {
+    "all_commit_data": text(" select * from all_commit_data limit 3"),
+}

@@ -1,3 +1,4 @@
+import csv
 import os
 import sqlite3
 import sys
@@ -29,7 +30,7 @@ from .models import (
     ensure_repository,
     load_commit,
 )
-from .stats import __STATS_SQL__
+from .stats import QUERY_SQL, STATS_SQL
 
 
 class Indexer:
@@ -40,6 +41,18 @@ class Indexer:
         echo: bool = False,
         flask_db: Optional[SQLAlchemy] = None,
     ):
+        """
+        initialize the Indexer object
+
+        :param uri:         Database uri, if not specified, use environment variable SQLALCHEMY_DATABASE_URI.
+                            if env is not set, then default to sqlite memory database
+        :param db_file:     When using sqlite memory database, load the content from this file during initialization.
+                            The memory database content will be saved to this file when export_db() is called.
+        :param echo:        If True, print out all SQL statements.
+        :param flask_db:    If specified, use this SQLAlchemy object to initialize the indexer, supersedes uri paramter.
+                            When sharing database with flask-sqlalchemy, we let it initialize the database first, then
+                            pass SQLAlchemy objectto Indexer so that Indexer can use the same database engine
+        """
         if flask_db:
             self._init_from_flask_db(flask_db)
             self.db_file = ""
@@ -83,12 +96,21 @@ class Indexer:
         self.session = Session(self.engine)
 
     def close(self):
+        """
+        close the database connection and save the database to disk if it's a memory database
+        """
         self.session.close()
 
         if self.is_mem_db and self.db_file:
             self._export_db_(self.db_file)
 
+        # self.engine.dispose()
+
     def _export_db_(self, dbf: str):
+        if "sqlite://" not in self.uri:
+            log("not a sqlite database, not exporting")
+            return
+
         # export database to file
         # write to temp file first then rename to avoid potentially corrupting the database
         tmp_file = dbf + ".new"
@@ -178,7 +200,7 @@ class Indexer:
     def update_commit_stats(self) -> None:
         """update stats at commit level"""
         log("updating commit stats")
-        for statement in __STATS_SQL__:
+        for statement in STATS_SQL:
             try:
                 self.session.execute(statement)
                 self.session.commit()
@@ -228,3 +250,13 @@ class Indexer:
             git_commit.files.append(new_file)
 
         return git_commit
+
+    def export_all_data(self, csv_file: str) -> None:
+        with self.engine.connect() as conn:
+            result = conn.execute(QUERY_SQL["all_commit_data"])
+
+            with open(csv_file, "w", newline="") as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow(result.keys())
+                for row in result:
+                    writer.writerow(row)

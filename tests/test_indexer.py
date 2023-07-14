@@ -18,10 +18,15 @@ def test_index_gitlab_repo(indexer, gitlab_test_repo):
 def test_export_db(tmp_path, indexer):
     # indexer should already have some data
     tmp_f = (tmp_path / "test.db").as_posix()
-
     indexer._export_db_(tmp_f)
+    assert os.path.isfile(tmp_f) and os.stat(tmp_f).st_size > 0
 
-    assert os.path.isfile(tmp_f)
+
+def test_export_csv(tmp_path, indexer):
+    indexer.update_commit_stats()  # this creates the view we need
+    tmp_f = (tmp_path / "test.csv").as_posix()
+    indexer.export_all_data(tmp_f)
+    assert os.path.isfile(tmp_f) and os.stat(tmp_f).st_size > 0
 
 
 def test_index_local_repo(indexer, local_repo):

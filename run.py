@@ -113,7 +113,7 @@ def run_indexer(args: argparse.Namespace) -> None:
         print(f"don't know how to index {args.source}")
         return
 
-    indexer = Indexer(db_file=os.path.expanduser(args.db))
+    indexer = Indexer(db_file=args.db)
 
     # speical undocumented query string for update the stats only
     # do not index any repos
@@ -128,11 +128,17 @@ def run_indexer(args: argparse.Namespace) -> None:
     if n_commits or args.query == "_stats_":
         indexer.update_commit_stats()
 
+    if args.export_csv:
+        indexer.export_all_data(args.export_csv)
+
     indexer.close()
 
     if args.upload:
         suffix = re.sub(r"[^0-9.]", "", timestamp())
         upload_file(args.db, f"git-indexer-{suffix}.db")
+
+        if os.path.isfile(args.export_csv) and os.stat(args.export_csv).st_size > 0:
+            upload_file(args.export_csv, "all_commit_data.csv")
 
     log(f"finished indexing {n_commits} commits in {n_repos} repositories")
 
@@ -188,7 +194,7 @@ def parse_args(args: list[str]) -> argparse.Namespace:
         "--db",
         dest="db",
         required=False,
-        default=os.path.expanduser("db/git-indexer.db"),
+        default="db/git-indexer.db",
         help="local data for storing indexed data",
     )
     parser.add_argument(
@@ -201,7 +207,13 @@ def parse_args(args: list[str]) -> argparse.Namespace:
         "--upload",
         action="store_true",
         default=False,
-        help="Uplaod database file to Google Cloud Storage",
+        help="Uplaod database file and export CSV file to Google Cloud Storage",
+    )
+    parser.add_argument(
+        "--export-csv",
+        dest="export_csv",
+        default="",
+        help="Export index result to CSV file",
     )
 
     ns = parser.parse_args(args)
@@ -230,6 +242,12 @@ def parse_args(args: list[str]) -> argparse.Namespace:
     if ns.output is not None:
         ns.output = os.path.abspath(os.path.expanduser(ns.output))
 
+    if ns.db:
+        ns.db = os.path.abspath(os.path.expanduser(ns.db))
+
+    if ns.export_csv:
+        ns.export_csv = os.path.abspath(os.path.expanduser(ns.db))
+
     # print(ns)
     return ns
 
@@ -240,6 +258,3 @@ if __name__ == "__main__":  # pragma: no cover
         run_mirror(args)
     elif args.index:
         run_indexer(args)
-    else:
-        # shouldn't happen
-        pass

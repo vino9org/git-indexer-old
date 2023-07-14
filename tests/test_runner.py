@@ -8,6 +8,11 @@ import run
 
 def test_cmdline_options():
     ## valid options
+    args = run.parse_args(
+        shlex.split("--index --source gitlab --query stuff_that_i_care --filter '*' --upload --export-csv my.csv")
+    )
+    assert args.index and args.source == "gitlab" and args.upload and args.export_csv
+
     args = run.parse_args(shlex.split("--index --source gitlab --dry-run"))
     assert args.index and args.source == "gitlab" and args.dry_run
 
