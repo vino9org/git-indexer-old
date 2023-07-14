@@ -38,6 +38,7 @@ def load_csv_to_bigquery(data, context):
             SchemaField(name="author_group", field_type="STRING", mode="NULLABLE"),
             SchemaField(name="sha", field_type="STRING", mode="REQUIRED"),
             SchemaField(name="commit_date", field_type="TIMESTAMP", mode="REQUIRED"),
+            SchemaField(name="commit_date_ts", field_type="TIMESTAMP", mode="REQUIRED"),
             SchemaField(name="is_merge", field_type="INTEGER", mode="REQUIRED"),
             SchemaField(name="commit_n_lines", field_type="INTEGER", mode="REQUIRED"),
             SchemaField(name="commit_n_files", field_type="INTEGER", mode="REQUIRED"),
