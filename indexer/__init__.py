@@ -255,8 +255,11 @@ class Indexer:
         with self.engine.connect() as conn:
             result = conn.execute(QUERY_SQL["all_commit_data"])
 
+            n_rows = 0
             with open(csv_file, "w", newline="") as csvfile:
                 writer = csv.writer(csvfile)
                 writer.writerow(result.keys())
                 for row in result:
+                    n_rows += 1
                     writer.writerow(row)
+                log(f"exported {n_rows} rows to {csv_file}")

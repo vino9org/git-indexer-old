@@ -108,5 +108,5 @@ STATS_SQL = [
 
 
 QUERY_SQL = {
-    "all_commit_data": text(" select * from all_commit_data limit 3"),
+    "all_commit_data": text(" select * from all_commit_data limit 1000000"),
 }

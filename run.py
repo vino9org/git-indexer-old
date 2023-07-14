@@ -246,7 +246,7 @@ def parse_args(args: list[str]) -> argparse.Namespace:
         ns.db = os.path.abspath(os.path.expanduser(ns.db))
 
     if ns.export_csv:
-        ns.export_csv = os.path.abspath(os.path.expanduser(ns.db))
+        ns.export_csv = os.path.abspath(os.path.expanduser(ns.export_csv))
 
     # print(ns)
     return ns
