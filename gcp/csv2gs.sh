@@ -35,5 +35,3 @@ EOF
 
 sqlite_to_csv $1
 csv2gs all_commit_data
-
-

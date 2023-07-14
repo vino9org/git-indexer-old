@@ -46,3 +46,7 @@ db/*
 
 # vscode plugins
 database-client-config.json
+
+# other files
+gcp/*
+scripts/*

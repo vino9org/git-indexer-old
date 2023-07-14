@@ -6,15 +6,26 @@
 
 ## create cloud function by CLI
 
+Create the service account and assign the following roles:
+
+* BigQuery Data Owner
+* BigQuery Job User
+* Storage Object Admin
+
 ```shell
 
-gcloud functions deploy load_csv_to_bigquery \
-  --runtime python310 \
-  --trigger-event "projects/_/buckets/vinolab/topics/google.storage.object.finalize" \
-  --source ./cloud_function \
-  --entry-point load_csv_to_bigquery \
-  --service-account "<service_account>@<project_id>.iam.gserviceaccount.com" \
-  --project project_id
+cd cloud_function
 
+gcloud functions deploy load_csv_to_bigquery \
+  --trigger-bucket <bucket> \
+  --runtime python310 \
+  --source . \
+  --entry-point load_csv_to_bigquery \
+  --service-account "<service-account>@<project-id>.iam.gserviceaccount.com" \
+  --project <project-id> \
+  --region=us-west1
+
+# after deployment, go into console and add environment variable
+# BQ_PROJECT_ID to <project-id> of the BigQuery project
 
 ```
