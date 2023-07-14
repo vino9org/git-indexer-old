@@ -16,4 +16,4 @@ if [ "$FILTER" = "" ]; then
     FILTER="*"
 fi
 
-PYTHONUNBUFFERED=1 python run.py --index --source gitlab --query "$QUERY" --filter "$FILTER" --upload --db $DATA_DIR/git-indexer.db
+PYTHONUNBUFFERED=1 python run.py --index --source gitlab --query "$QUERY" --filter "$FILTER" --upload --db $DATA_DIR/git-indexer.db --export-csv /tmp/all_commit_data.csv
